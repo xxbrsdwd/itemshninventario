@@ -443,6 +443,35 @@
       font-size: 12px;
       line-height: 1.35;
     }
+  
+
+    /* Pegar imagen (clipboard / drag & drop) */
+    .pasteZone{
+      width:100%;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(255,255,255,.22);
+      background: rgba(0,0,0,.14);
+      color: rgba(234,240,255,.80);
+      font-weight: 850;
+      letter-spacing: .2px;
+      text-align: center;
+      cursor: pointer;
+      user-select:none;
+      transition: .18s ease;
+    }
+    .pasteZone:hover{ background: rgba(255,255,255,.06); }
+    .pasteZone:focus{ outline:none; box-shadow: 0 0 0 4px rgba(46,233,255,.10); border-color: rgba(46,233,255,.40); }
+    .pasteZone.drag{ background: rgba(46,233,255,.10); border-color: rgba(46,233,255,.45); }
+    .pastePreview{
+      width: 100%;
+      max-height: 180px;
+      object-fit: contain;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+    }
+
   </style>
 </head>
 
@@ -597,6 +626,16 @@
                 <label for="pPhoto">Foto (se verá pequeña; click para ver grande)</label>
                 <input id="pPhoto" type="file" accept="image/*" />
                 <div class="help">Se guarda dentro del sistema (dataURL). Recomendado: fotos ligeras.</div>
+                <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; margin-top:10px; flex-wrap:wrap;">
+                  <div id="pPasteZone" class="pasteZone" tabindex="0" title="Click aquí y luego Ctrl+V">📋 Pega una imagen aquí (Ctrl+V) o arrástrala</div>
+                </div>
+                <div style="display:none; margin-top:10px;" id="pPastePreviewWrap">
+                  <img id="pPastePreview" class="pastePreview" alt="Vista previa" />
+                  <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="btn" type="button" id="btnClearPasted">Quitar imagen pegada</button>
+                  </div>
+                </div>
+
               </div>
 
               <div class="split">
@@ -975,6 +1014,7 @@ async function syncPush(){
     let masterBytes = null;  // Uint8Array derivado PBKDF2 (solo en memoria)
     let db = null;           // { inventory: [], sales: [], meta: {} }
     let editingProductId = null;
+    let pastedPhotoDataUrl = ""; // dataURL de imagen pegada/arrastrada
 
     // ====== Utilidades ======
     const $ = (id) => document.getElementById(id);
@@ -1371,6 +1411,11 @@ async function syncPush(){
         }
       }
 
+      // Si no escogiste archivo pero pegaste/arrastraste una imagen, úsala
+      if(!photo && pastedPhotoDataUrl){
+        photo = pastedPhotoDataUrl;
+      }
+
       if(editingProductId){
         const p = findProduct(editingProductId);
         if(!p) return;
@@ -1403,6 +1448,10 @@ async function syncPush(){
       $("pQty").value = "";
       $("pPhoto").value = "";
 
+      pastedPhotoDataUrl = "";
+      if($("pPastePreviewWrap")) $("pPastePreviewWrap").style.display = "none";
+      if($("pPastePreview")) $("pPastePreview").src = "";
+
       await saveDb();
       renderInventory();
     }
@@ -1416,8 +1465,97 @@ async function syncPush(){
       $("pCost").value = "";
       $("pQty").value = "";
       $("pPhoto").value = "";
+
+      pastedPhotoDataUrl = "";
+      if($("pPastePreviewWrap")) $("pPastePreviewWrap").style.display = "none";
+      if($("pPastePreview")) $("pPastePreview").src = "";
       toast("Edición cancelada.");
     };
+
+    // ====== Pegar imagen en inventario (Ctrl+V) / Arrastrar y soltar ======
+    async function tryHandlePastedImageFromItems(items){
+      if(!items) return false;
+      for (const it of items){
+        if(it && it.type && it.type.startsWith('image/')){
+          const file = it.getAsFile ? it.getAsFile() : null;
+          if(!file) continue;
+          const url = await fileToDataUrlResized(file, 900, 900, 0.84);
+          pastedPhotoDataUrl = url;
+          if($("pPastePreview")) $("pPastePreview").src = url;
+          if($("pPastePreviewWrap")) $("pPastePreviewWrap").style.display = "block";
+          toast("Imagen pegada ✅");
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Nota: por seguridad del navegador, NO podemos llenar el input file automáticamente.
+    // Por eso guardamos la imagen pegada en memoria (pastedPhotoDataUrl) y se usa al guardar.
+
+    (function bindPasteZone(){
+      const zone = $("pPasteZone");
+      if(!zone) return;
+
+      zone.addEventListener('paste', async (e) => {
+        try{
+          const items = e.clipboardData && e.clipboardData.items;
+          const ok = await tryHandlePastedImageFromItems(items);
+          if(ok) e.preventDefault();
+          else toast("No se detectó imagen en el portapapeles.");
+        }catch(err){
+          toast("No se pudo pegar la imagen.");
+        }
+      });
+
+      // Drag & drop (opcional, pero útil)
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('drag');
+      });
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+      zone.addEventListener('drop', async (e) => {
+        try{
+          e.preventDefault();
+          zone.classList.remove('drag');
+          const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+          if(!file || !String(file.type).startsWith('image/')){
+            toast("Arrastra una imagen válida.");
+            return;
+          }
+          const url = await fileToDataUrlResized(file, 900, 900, 0.84);
+          pastedPhotoDataUrl = url;
+          if($("pPastePreview")) $("pPastePreview").src = url;
+          if($("pPastePreviewWrap")) $("pPastePreviewWrap").style.display = "block";
+          toast("Imagen cargada ✅");
+        }catch(err){
+          toast("No se pudo procesar la imagen.");
+        }
+      });
+
+      // Si el usuario selecciona archivo manualmente, limpiamos la pegada
+      const fileInput = $("pPhoto");
+      if(fileInput){
+        fileInput.addEventListener('change', () => {
+          if(fileInput.files && fileInput.files[0]){
+            pastedPhotoDataUrl = "";
+            if($("pPastePreviewWrap")) $("pPastePreviewWrap").style.display = "none";
+            if($("pPastePreview")) $("pPastePreview").src = "";
+          }
+        });
+      }
+
+      const btnClear = $("btnClearPasted");
+      if(btnClear){
+        btnClear.addEventListener('click', () => {
+          pastedPhotoDataUrl = "";
+          if($("pPastePreviewWrap")) $("pPastePreviewWrap").style.display = "none";
+          if($("pPastePreview")) $("pPastePreview").src = "";
+          toast("Imagen pegada removida.");
+        });
+      }
+    })();
+
 
     // ====== VENTAS ======
     function refreshSalesProductDropdown(){
