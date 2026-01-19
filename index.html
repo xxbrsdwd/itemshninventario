@@ -434,7 +434,17 @@
     .right{ text-align:right; }
     .nowrap{ white-space:nowrap; }
 
-    .note{
+    
+
+    .bulkBox{
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .bulkBox textarea{ min-height: 140px; }
+
+.note{
       border: 1px solid rgba(255,204,102,.25);
       background: rgba(255,204,102,.08);
       border-radius: 16px;
@@ -642,6 +652,42 @@
                 <button class="btn primary" id="btnSaveProduct">Guardar</button>
                 <button class="btn" id="btnCancelEdit" style="display:none;">Cancelar edición</button>
               </div>
+
+              <div class="sep"></div>
+              <div class="bulkBox">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                  <div>
+                    <div style="font-weight:950; letter-spacing:.2px;">Carga masiva</div>
+                    <div class="mini">Pega una lista (1 producto por línea) o carga tu lista completa. Agrega con costo/stock por defecto.</div>
+                  </div>
+                  <div class="tag" id="bulkCountTag">PRODUCTOS TOTALES: —</div>
+                </div>
+
+                <div class="split" style="margin-top:10px;">
+                  <div class="field">
+                    <label for="bulkCost">Costo inversión (por unidad)</label>
+                    <input id="bulkCost" type="number" inputmode="decimal" step="0.01" min="0" />
+                  </div>
+                  <div class="field">
+                    <label for="bulkQty">Stock (por producto)</label>
+                    <input id="bulkQty" type="number" inputmode="numeric" step="1" min="0" />
+                  </div>
+                </div>
+
+                <div class="field" style="margin-top:8px;">
+                  <label for="bulkList">Lista de productos (uno por línea)</label>
+                  <textarea id="bulkList" placeholder="Ej:\nPASAMONTAÑA BALACLAVA\nCARGADOR 20W\n...\n"></textarea>
+                  <div class="help">Tip: si un nombre ya existe en inventario, se omitirá para evitar duplicados.</div>
+                </div>
+
+                <div class="split" style="margin-top:10px;">
+                  <button class="btn" type="button" id="btnBulkAdd">Agregar lista pegada</button>
+                  <button class="btn primary" type="button" id="btnBulkLoadTotals">Agregar PRODUCTOS TOTALES</button>
+                </div>
+
+                <div class="help" id="bulkResult" style="margin-top:8px;"></div>
+              </div>
+
 
               <div class="sep"></div>
               <div class="note">
@@ -901,6 +947,165 @@
     // ====== Storage key ======
     const STORAGE_KEY = "ii_secure_blob_v1";
 
+// ====== Productos Totales (precarga / carga masiva) ======
+const DEFAULT_BULK_UNIT_COST = 100;
+const DEFAULT_BULK_STOCK = 10;
+// Lista tomada de tu archivo PRODUCTOS TOTALES.txt (solo nombres).
+const PRODUCTOS_TOTALES = [
+  "INFABLE SANTA CLAUS NAVIDAD 1.8 METROS🥳‼️🎄",
+  "Tableta Version Chip 5G 256GB - 8GB RAM - con accesorios bluetooth X9+",
+  "Tableta Fire 7 Niños, Kids 16GB con Cargador 66W GRATIS",
+  "Flores Pascuas Navideñas Decoraciones Navidad",
+  "Esferas Decoraciones Navideñas Arbol Navidad 101 Pzs",
+  "Forro de Casco Peluche Santa Claus",
+  "Pie Base De Arbol Navidad Talla L ENVIOS TODO HONDURAS",
+  "INFLABLE SANTA CLAUS NAVIDAD 1.8 METROS",
+  "Camara de Retroceso para Vehículos ENVIOS A TODO HONDURAS",
+  "Guantes para Moto Tapa Sol ENVIOS A TODO HONDURAS",
+  "Cuerda para Amarrar Moto 150 cm Envios a TODO HONDURAS",
+  "Holder Celular para Carro ENVIOS TODO HONDURAS",
+  "Lector Micro SD USB 2.0 OFERTA‼️ENVIOS A TODO HONDURAS",
+  "Cargador para Tipo C Doble Entrada 66W Carga Rapida ENVIOS A TODO HONDURAS",
+  "Foco Bluetooth Musical RGB ENVIOS A TODO HONDURAS",
+  "Reloj Contra el Agua Digital Multifuncional ENVIOS A TODO HONDURAS",
+  "Reloj Digital OFERTA‼️ENVIOS A TODO HONDURAS",
+  "Reloj Digital para Niños Niñas de Stitch ENVIOS A TODO HONDURAS",
+  "Gafas Lentes Para Moto Casco ENVIOS A TODO HONDURAS",
+  "Mascara Con Lentes Para Casco Moto ENVIOS A TODO HONDURAS",
+  "Mascara Calavera para Casco Moto OFERTA‼️ENVIOS A TODO HONDURAS",
+  "Llaveros Variedad Stitch ENVIOS A TODO HONDURAS",
+  "Llaveros Osito Panda ENVIOS A TODO HONDURAS",
+  "Llaveros Forky Budy Personajes Toy Story ENVIOS A TODO HONDURAS",
+  "Llaveros Ironman Hulk Superheroes Marvel ENVIOS A TODO HONDURAS",
+  "Llaveros de Intensamente ENVIOS A TODO HONDURAS",
+  "Llaveros Labubu VARIEDAD‼️ENVIOS A TODO HONDURAS",
+  "Adaptador WIFI 150 mbps ENVIOS A TODO HONDURAS",
+  "Repetidor Wifi Tenda N300 ENVIO TODO HONDURAS",
+  "iPhone 15 Pro Max 256GB 86% ENVIOS GRATIS TODO HONDURAS",
+  "Forro de Asiento Moto tipo Cuero Impermeable ENVIOS TODO HONDURAS",
+  "Moto Génesis HJ125-7 PAPELES EN REGLA TEGUCIGALPA",
+  "Control para TV Roku 70lps Envios Domicilio 🤯‼️",
+  "Smart TV Hisense 58 pulgadas 4K ENVIO GRATIS TODO HONDURAS NUEVO SELLADO‼️",
+  "TV Led Tekno 32 pulgadas ENVIO GRATIS TODO HONDURAS NUEVO SELLADO",
+  "Smart TV Hisense 32 Pulgadas NUEVO SELLADO GARANTIA 6 MESES ENVIO GRATIS TODO HONDURAS‼️",
+  "Pizarra Magica Para Niños ENVIOS TODO HONDURAS",
+  "Intercomunicador K06 para Casco SUPER PRECIO‼️",
+  "PROTEÍNA ISO100 – SABOR BIRTHDAY CAKE 🎂💪✨",
+  "iPhone 8 Plus 256GB 100% BATERIA 10/10",
+  "Samsung S24 Ultra 256GB 10/10",
+  "Vivo x200 Pro 1TB 97% 10/10",
+  "Infinix GT20 Pro 256GB 24RAM 9.5/10",
+  "PowerBank 20,000 MaH",
+  "Pasamontañas",
+  "Proyector HD Portatil",
+  "Foco Camara Wifi Giratoria App YiIot",
+  "Camara Exterior Wifi Giratoria 360°",
+  "Pecheras para Cámaras o Go Pro",
+  "Cargador iPhone 20W Tipo C Carga Rápida",
+  "Mochila Ojos LED Multifuncional con Powerbank Incluida",
+  "Repetidor WiFi 300 Mbps",
+  "GPS Premium Magnetico Localizador Tiempo Real",
+  "GPS Premium Guarda rutas, horas, Velocidad, Tiempo Real",
+  "M90 Pro Auriculares con Pantalla de carga de cada auricular",
+  "Vidrio Templado para Nintendo Switch",
+  "Hub Adaptador para 7 Puertos USB con Luz Led Corta Corriente",
+  "OFERTA ‼️Set Destornilladores Profesional para Celulares 115",
+  "Kit Go Pro 9/10/11/12 Funda Silicona y Vidrios Templados",
+  "Carcasa Go Pro 8 Impermeable Contra el Agua",
+  "Carcasa Go Pro 9/10/11/12 Impermeable Contra el Agua",
+  "Intercomunicador Y20 para Casco PREMIUM Musica Llamadas",
+  "Cargador de Bateria para Carro y Moto 12V",
+  "Memoria USB 128GB con Musica",
+  "SanDisk Ultra Micro SD 128 GB con Adaptador y Lector USB",
+  "Mouse Logitech G502 Hero",
+  "Kawasaki Ninja Moto a Escala 1:18 con Base Metal y Plástico",
+  "Pechera para Cámara y Celular",
+  "Cargador Doble Controles PlayStation 5",
+  "Handgrip Ejercitador INDESTRUCTIBLE APTO PARA FUERTES",
+  "Set Destornilladores 32 en 1 Portátil",
+  "Auriculares F9 Inalámbricos y Powerbank",
+  "Microfono Inalambrico Doble para iPhone y Tipo C de Solapa",
+  "Powerbank 200,000 MaH 100W iPhone/Android Cualquier Celular con Panel Solar",
+  "Disco SSD 960GB NUEVO SELLADO",
+  "Lego de Construcción de Accion Variedad",
+  "Intercomunicador Casco P10 2X para Parejas o Amigos",
+  "Mouse Gaming Razer Deathadder Essential",
+  "Set Gorros Bebé 3 pzs 0-6 meses y 1-2 años",
+  "Monitor Gaming 240hz KTC Certificado 32”",
+  "Camara Exterior Wifi Gira 360",
+  "Foco Camara Doble Lente Wifi Gira 360",
+  "Intercomunicador para Casco 7 Dias de Uso P10",
+  "Accesorios Go Pro 50 en 1 4/5/6/7/8/9/10/11/12 Insta 360",
+  "Kit Organizador Ropa Interior",
+  "Drone E99 Pro Doble Camara",
+  "Cargador y Reparador de Bateria Carro y Moto 12V",
+  "Mousepad RGB XXL Gaming",
+  "Camara Deportiva 4K Full Accesorios",
+  "Set Reloj para Regalo",
+  "Handgrip con Contador hasta 60kg",
+  "Powerbank 40,000 MaH OFERTA❗️",
+  "Lapiz Para iPad Rechazo de Palma LIQUIDACION‼️",
+  "Lapiz Tactil Universal LIQUIDACIÓN‼️",
+  "Kit Grabacion Celular y Camara",
+  "Samsung Tab S10 FE 128GB 1 AÑO DE GARANTIA NUEVA CON SU S-PEN NUEVA DE CAJA",
+  "Adaptador Sata para Disco Duro 2 en 1",
+  "Intercomunicador Auricular para Casco Y10",
+  "Camara Vigilancia Giratoria Wifi Exterior 360°",
+  "Camara Giratoria Exterior Multiled 360°",
+  "Helicoptero Control Remoto Recargable",
+  "Mini Camara WiFi HD",
+  "Carrito Plegable Metal Hasta 400 lbs",
+  "Mouse Inalambrico Económico",
+  "Relojes para Dama Variedad Set",
+  "Pulseras de Pareja",
+  "Vitaminas Capsulas para Cabello Vitaminas A-C-E Restaura y Sana SELLADAS",
+  "Memoria Micro SD 2TB V30",
+  "Carteras para Dama Variedad",
+  "Cartera Grande para Mujer Incluye Lazo",
+  "Esferas Navideñas Set de 50 Piezas Surtido",
+  "Control Inalambrico PS3/ PS4/ PC COMPLETAMENTE NUEVOS",
+  "Kit Accesorios Go Pro 4/5/6/7/8/9/10/11/12 27 en 1",
+  "Lapiz 2da Generacion para iPad Rechazo de Palma Carga Magnetica",
+  "Forro para Casco Conejo Tipo Peluche CALIDAD",
+  "Accesorios Go Pro Hero 9/10/11/12 63 en 1 INCLUYE VIDRIOS TEMPLADOS",
+  "ENVIO GRATIS MicroSD 512GB 200MB/s SanDisk Extreme Pro 4K UHD",
+  "Dron Premium K3 E99Pro 4K Doble Camara Luz Led con Estuche",
+  "Ganchos para Maquillaje Sujeta Cabello SET 6 Piezas",
+  "Borlas/Puff para Maquillaje Suaves y Calidad",
+  "Cubre Pezon Adhesivo Silicona 2 Figuras",
+  "Set Aretes Collar 3 piezas Delicados Joyeria Europea",
+  "Camara Web con Microfono 1080HD",
+  "Llave Yamaha en Blanco para Ybr/Genesis/Fz/Yzf/R1/R6/R6S/Xjr 1300",
+  "Llave Yamaha en Blanco R25/R3/Xmax/R125/200/250/MT01/SR400/FZ6R/FZ6N/MT03/R15",
+  "Funda para Volante Set 3 Piezas Timon Carro 37-38cm",
+  "Esponja Mágica Limpia de TODO",
+  "GANGA‼️Cobertor TPU Nintendo Switch V1/V2 CONTRA RAYONES",
+  "Dedales Gamer Por Mayor y Al Detalle",
+  "Gorros Suavecitos Calentitos para Bebé 1-2 años Set 3 piezas",
+  "Organizadores de Maleta para Viajes Set 6 Piezas VARIEDAD COLORES",
+  "Bolso Mensajero para Viajes",
+  "Peluche Perrito San Valentin para Niño Rígido",
+  "Linterna Foco Recargable 4 modos 6 Leds",
+  "Camión con 10 carros de Cuerda",
+  "Avión Pistola Lanzadora Dinámica",
+  "RTX 3060 12GB GDDR6 ZOTAC GAMING",
+  "Teclado y Mouse RGB Gaming Combo PROMO",
+  "Memoria USB 2TB 3.0 Xiaomi + Adaptador Tipo C Incluido",
+  "Mesa Gaming Tipo L con Luz Led Facil Armado",
+  "Bolso Grande Bandolera Calidad",
+  "Soporte Celular para Carro Retrovisor",
+  "Cosmetiquera de Viaje Plegable Práctica y Elegante",
+  "Auriculares Gaming X15 con LEDS y Pantalla PAGA AL RECIBIR TODO HONDURAS",
+  "Microfono Lavalier Inalámbrico Recargable Tipo C PAGA AL RECIBIR TODO HONDURAS",
+  "Proyector Galaxia Niños y Bebes Giratorio 17 Modos Potente PAGA AL RECIBIR TODO HONDURAS",
+  "Jabon para Cara ORIGINAL Piel Seca a Normal ENVIOS A TODO HONDURAS",
+  "Detox Suplemento Greens y Superfoods tipo Bloom ENVIOS TODO HONDURAS",
+  "Colageno Suplemento Tableta 5 COLAGENOS‼️ENVIOS TODO HONDURAS",
+  "Camara Exterior 360 Giratoria Wifi LIQUIDACIÓN",
+  "Soporte Camara y Celular para Casco OFERTA",
+  "Mini Camara Vigilancia 1080HD ‼️"
+];
+
 
     // ====== GitHub Cloud Sync (archivo cifrado en el repo) ======
 // Rellena estos 4 datos:
@@ -987,6 +1192,7 @@ async function syncPull(){
   // Luego cargamos y desciframos con tu clave actual
   await loadDbOrInit();
   renderInventory();
+  bindBulkUi();
   renderSalesDay();
   renderSummary();
   toast("Sync ⬇ listo ✅");
@@ -1142,20 +1348,20 @@ async function syncPush(){
       const raw = localStorage.getItem(STORAGE_KEY);
       if(!raw){
         db = {
-          inventory: [
-            {
-              id: uid("p"),
-              name: "PASAMONTAÑA BALACLAVA",
-              unitCost: 0,
-              qty: 0,
-              photo: "",
-              createdAt: new Date().toISOString()
-            }
-          ],
+          inventory: PRODUCTOS_TOTALES.map((nm) => ({
+            id: uid("p"),
+            name: String(nm || "").trim(),
+            unitCost: DEFAULT_BULK_UNIT_COST,
+            qty: DEFAULT_BULK_STOCK,
+            photo: "",
+            createdAt: new Date().toISOString()
+          })),
           sales: [],
           meta: {
             createdAt: new Date().toISOString(),
-            version: 1
+            version: 1,
+            seededFrom: "PRODUCTOS_TOTALES",
+            seededCount: PRODUCTOS_TOTALES.length
           }
         };
         await saveDb();
@@ -1472,6 +1678,77 @@ async function syncPush(){
       toast("Edición cancelada.");
     };
 
+    // ====== CARGA MASIVA (productos) ======
+    function normalizeNameKey(s){
+      return String(s||"").trim().replace(/\s+/g," ").toLowerCase();
+    }
+
+    function bulkAddProductsFromNames(nameList, unitCost, qty){
+      const nowIso = new Date().toISOString();
+      const seen = new Set(db.inventory.map(p => normalizeNameKey(p.name)));
+      const added = [];
+      let skipped = 0;
+
+      for(const raw of nameList){
+        const name = String(raw||"").trim();
+        if(!name){ skipped++; continue; }
+        const key = normalizeNameKey(name);
+        if(!key){ skipped++; continue; }
+        if(seen.has(key)){ skipped++; continue; }
+        seen.add(key);
+        added.push({
+          id: uid("p"),
+          name,
+          unitCost: clamp(num(unitCost), 0, 1e12),
+          qty: Math.floor(clamp(num(qty), 0, 1e9)),
+          photo: "",
+          createdAt: nowIso
+        });
+      }
+
+      // Unshift en reversa para mantener el orden original
+      for(let i=added.length-1; i>=0; i--) db.inventory.unshift(added[i]);
+
+      return { added: added.length, skipped };
+    }
+
+    async function handleBulkAdd(names){
+      if(!Array.isArray(names) || names.length === 0){
+        toast("No hay productos para agregar.");
+        return;
+      }
+      const unitCost = num($("bulkCost").value);
+      const qty = num($("bulkQty").value);
+
+      const { added, skipped } = bulkAddProductsFromNames(names, unitCost, qty);
+      await saveDb();
+      renderInventory();
+
+      const msg = `Agregados: ${added} • Omitidos: ${skipped}`;
+      $("bulkResult").textContent = msg;
+      toast(msg + " ✅");
+    }
+
+    function bindBulkUi(){
+      if(!$("bulkCountTag")) return;
+      $("bulkCountTag").textContent = `PRODUCTOS TOTALES: ${PRODUCTOS_TOTALES.length}`;
+      if(!$("bulkCost").value) $("bulkCost").value = String(DEFAULT_BULK_UNIT_COST);
+      if(!$("bulkQty").value) $("bulkQty").value = String(DEFAULT_BULK_STOCK);
+
+      $("btnBulkAdd").onclick = async () => {
+        const txt = String($("bulkList").value || "");
+        const lines = txt.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+        await handleBulkAdd(lines);
+      };
+
+      $("btnBulkLoadTotals").onclick = async () => {
+        if(!confirm(`Agregar ${PRODUCTOS_TOTALES.length} productos (costo ${$("bulkCost").value} / stock ${$("bulkQty").value})?`)) return;
+        await handleBulkAdd(PRODUCTOS_TOTALES);
+      };
+    }
+
+
+
     // ====== Pegar imagen en inventario (Ctrl+V) / Arrastrar y soltar ======
     async function tryHandlePastedImageFromItems(items){
       if(!items) return false;
@@ -1758,6 +2035,7 @@ async function syncPush(){
 
       await saveDb();
       renderInventory();
+      bindBulkUi();
       renderSalesDay();
       updateAllSummaries();
       toast("Venta eliminada (stock revertido) ✅");
@@ -1982,6 +2260,7 @@ $("btnSyncPush").onclick = async () => {
 
       // Render
       renderInventory();
+      bindBulkUi();
       renderSalesDay();
       renderSummary();
 
