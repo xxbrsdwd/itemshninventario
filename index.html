@@ -1,0 +1,1832 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>International Items — Inventario & Ventas</title>
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    :root{
+      --bg0:#070A12;
+      --bg1:#0B1020;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.12);
+      --stroke2: rgba(255,255,255,.18);
+      --text:#EAF0FF;
+      --muted: rgba(234,240,255,.72);
+      --muted2: rgba(234,240,255,.55);
+      --good:#4DE1A3;
+      --warn:#FFCC66;
+      --bad:#FF6B7A;
+      --accent:#7C5CFF;
+      --accent2:#2EE9FF;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius: 18px;
+      --radius2: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 14% 10%, rgba(124,92,255,.25), transparent 55%),
+        radial-gradient(1000px 700px at 85% 18%, rgba(46,233,255,.18), transparent 55%),
+        radial-gradient(900px 700px at 55% 95%, rgba(77,225,163,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    .wrap{ max-width:1180px; margin: 0 auto; padding: 22px; }
+    .topbar{
+      position: sticky;
+      top:0;
+      z-index:10;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(180deg, rgba(7,10,18,.92), rgba(7,10,18,.60));
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .topbar .wrap{ padding-top: 18px; padding-bottom: 14px; }
+
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      user-select:none;
+    }
+    .logo{
+      width:42px; height:42px; border-radius: 14px;
+      background:
+        radial-gradient(14px 14px at 30% 30%, rgba(255,255,255,.60), transparent 60%),
+        radial-gradient(18px 18px at 70% 65%, rgba(255,255,255,.35), transparent 60%),
+        linear-gradient(135deg, rgba(124,92,255,1), rgba(46,233,255,1));
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .brand h1{
+      font-size: 15px; margin:0;
+      letter-spacing:.35px;
+      line-height: 1.2;
+    }
+    .brand p{ margin:0; font-size:12px; color: var(--muted); }
+
+    .row{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+
+    .nav{
+      display:flex; gap:10px; flex-wrap:wrap;
+      padding: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .tab{
+      appearance:none;
+      border: 0;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: transparent;
+      cursor:pointer;
+      font-weight: 700;
+      letter-spacing: .2px;
+      transition: .18s ease;
+    }
+    .tab:hover{ color: var(--text); background: rgba(255,255,255,.06); }
+    .tab.active{
+      color: var(--text);
+      background: linear-gradient(135deg, rgba(124,92,255,.35), rgba(46,233,255,.18));
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 10px 22px rgba(0,0,0,.28);
+    }
+
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .btn{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor:pointer;
+      font-weight: 800;
+      letter-spacing:.2px;
+      transition: .18s ease;
+    }
+    .btn:hover{ background: rgba(255,255,255,.09); transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0px); }
+    .btn.primary{
+      border-color: rgba(124,92,255,.35);
+      background: linear-gradient(135deg, rgba(124,92,255,.50), rgba(46,233,255,.18));
+    }
+    .btn.danger{
+      border-color: rgba(255,107,122,.35);
+      background: rgba(255,107,122,.10);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 14px 14px 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+    }
+    .card .hd .title{
+      margin:0;
+      font-size: 14px;
+      letter-spacing: .35px;
+    }
+    .card .hd .sub{
+      margin:4px 0 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .card .bd{ padding: 14px; }
+
+    .field{
+      display:flex; flex-direction:column; gap:7px; margin-bottom: 12px;
+    }
+    label{ font-size: 12px; color: var(--muted); font-weight: 800; letter-spacing:.25px; }
+    input, select, textarea{
+      width:100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      outline:none;
+      transition: .18s ease;
+      font-weight: 650;
+    }
+    textarea{ min-height: 92px; resize: vertical; }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(46,233,255,.35);
+      box-shadow: 0 0 0 4px rgba(46,233,255,.10);
+    }
+    .help{ font-size: 12px; color: var(--muted2); margin-top: 2px; line-height: 1.35; }
+
+    .split{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 520px){ .split{ grid-template-columns: 1fr; } }
+
+    .tablewrap{
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      overflow:hidden;
+      background: rgba(0,0,0,.12);
+    }
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+    thead th{
+      text-align:left;
+      padding: 10px 10px;
+      color: var(--muted);
+      background: rgba(255,255,255,.04);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      font-weight: 900;
+      letter-spacing:.25px;
+      white-space:nowrap;
+    }
+    tbody td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      vertical-align: middle;
+    }
+    tbody tr:hover td{ background: rgba(255,255,255,.03); }
+
+    .tag{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 11px;
+      white-space:nowrap;
+    }
+    .tag.good{ border-color: rgba(77,225,163,.35); color: rgba(77,225,163,.95); background: rgba(77,225,163,.08); }
+    .tag.bad{ border-color: rgba(255,107,122,.35); color: rgba(255,107,122,.95); background: rgba(255,107,122,.08); }
+    .tag.warn{ border-color: rgba(255,204,102,.35); color: rgba(255,204,102,.95); background: rgba(255,204,102,.08); }
+
+    .thumb{
+      width: 38px; height: 38px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      cursor: zoom-in;
+    }
+
+    .muted{ color: var(--muted); }
+    .mono{ font-family: var(--mono); }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      padding: 12px 14px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      display:none;
+      z-index: 99;
+      max-width: calc(100% - 26px);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      backdrop-filter: blur(10px);
+    }
+
+    /* Login */
+    .loginShell{
+      min-height: 100vh;
+      display:grid;
+      place-items:center;
+      padding: 20px;
+    }
+    .loginCard{
+      width: min(520px, 100%);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .loginTop{
+      padding: 18px 18px 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background:
+        radial-gradient(420px 220px at 20% 10%, rgba(124,92,255,.22), transparent 65%),
+        radial-gradient(420px 220px at 80% 10%, rgba(46,233,255,.14), transparent 65%),
+        linear-gradient(180deg, rgba(255,255,255,.05), transparent);
+    }
+    .loginTop h2{ margin: 0; font-size: 16px; letter-spacing:.35px; }
+    .loginTop p{ margin: 8px 0 0 0; font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .loginBody{ padding: 16px 18px 18px 18px; }
+    .loginFoot{
+      padding: 12px 18px 16px 18px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      color: var(--muted2);
+      font-size: 11.5px;
+      line-height: 1.35;
+    }
+    .hint{
+      display:flex; gap:10px; align-items:flex-start;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      margin-top: 12px;
+    }
+    .dot{
+      width: 10px; height: 10px; border-radius: 999px;
+      background: rgba(46,233,255,.70);
+      margin-top: 3px;
+      box-shadow: 0 0 0 4px rgba(46,233,255,.10);
+    }
+
+    /* Modal */
+    .modal{
+      position: fixed;
+      inset:0;
+      background: rgba(0,0,0,.60);
+      backdrop-filter: blur(12px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 100;
+      padding: 18px;
+    }
+    .modalCard{
+      width: min(900px, 100%);
+      background: rgba(12,16,32,.80);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modalHd{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+    }
+    .modalHd .t{ font-weight: 950; font-size: 13px; letter-spacing:.25px; }
+    .modalBd{ padding: 14px; }
+    .modalImg{
+      width:100%;
+      max-height: 72vh;
+      object-fit: contain;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+    }
+
+    .footer{
+      padding: 22px 0 40px 0;
+      color: var(--muted2);
+      font-size: 12px;
+      text-align:center;
+    }
+
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 520px){ .kpi{ grid-template-columns: 1fr; } }
+    .kpi .box{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      padding: 12px;
+    }
+    .kpi .box .n{
+      font-size: 18px;
+      font-weight: 1000;
+      letter-spacing: .2px;
+      margin: 0;
+    }
+    .kpi .box .l{
+      font-size: 12px;
+      color: var(--muted);
+      margin: 6px 0 0 0;
+      font-weight: 850;
+      letter-spacing:.25px;
+    }
+
+    .mini{
+      font-size: 11.5px;
+      color: var(--muted2);
+      line-height: 1.3;
+    }
+
+    .sep{ height: 1px; background: rgba(255,255,255,.10); margin: 12px 0; }
+    .right{ text-align:right; }
+    .nowrap{ white-space:nowrap; }
+
+    .note{
+      border: 1px solid rgba(255,204,102,.25);
+      background: rgba(255,204,102,.08);
+      border-radius: 16px;
+      padding: 10px 12px;
+      color: rgba(255,204,102,.95);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- =========================
+       LOGIN (PRIMERO)
+       ========================= -->
+  <div id="loginView" class="loginShell" aria-hidden="false">
+    <div class="loginCard">
+      <div class="loginTop">
+        <div class="brand" style="gap:12px;">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <h2>Acceso seguro — Inventario & Ventas</h2>
+            <p>Todo queda guardado localmente en tu navegador (en este dispositivo) y cifrado con tu clave.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="loginBody">
+        <div class="field">
+          <label for="loginUser">Usuario</label>
+          <input id="loginUser" autocomplete="username" placeholder="Usuario" />
+        </div>
+        <div class="field">
+          <label for="loginPass">Contraseña</label>
+          <input id="loginPass" type="password" autocomplete="current-password" placeholder="Contraseña" />
+        </div>
+
+        <div class="split">
+          <button class="btn primary" id="btnLogin">Entrar</button>
+          <button class="btn" id="btnLoginFill">Autollenar usuario</button>
+        </div>
+
+        <div class="hint">
+          <div class="dot" aria-hidden="true"></div>
+          <div class="mini">
+            <b>Importante (realista):</b> como esto corre 100% en el navegador (GitHub Pages), nadie puede “proteger” el archivo si te lo copian y lo editan.
+            Lo que sí hace este sistema es:
+            <br>✅ no guardar tu contraseña en texto plano (solo verificador con PBKDF2+SHA-256)
+            <br>✅ cifrar tus datos (inventario/ventas) con AES-GCM usando la contraseña
+          </div>
+        </div>
+      </div>
+
+      <div class="loginFoot">
+        Consejo: usa <b>Exportar respaldo</b> dentro del sistema para guardar copias diarias (backup cifrado).
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================
+       APP
+       ========================= -->
+  <div id="appView" style="display:none;" aria-hidden="true">
+    <div class="topbar">
+      <div class="wrap">
+        <div class="row">
+          <div class="brand">
+            <div class="logo" aria-hidden="true"></div>
+            <div>
+              <h1>International Items — Panel Profesional</h1>
+              <p id="subline">Inventario • Ventas del día • Resumen</p>
+            </div>
+          </div>
+
+          <div class="nav" role="tablist" aria-label="Secciones">
+            <button class="tab active" data-tab="inventario" role="tab" aria-selected="true">Inventario</button>
+            <button class="tab" data-tab="ventas" role="tab" aria-selected="false">Ventas del día</button>
+            <button class="tab" data-tab="resumen" role="tab" aria-selected="false">Resumen</button>
+          </div>
+
+          <div class="actions">
+            <span class="pill"><span class="mono" id="pillUser">—</span> • <span id="pillStatus">Cifrado ✅</span></span>
+            <button class="btn" id="btnExport">Exportar respaldo</button>
+            <label class="btn" style="display:inline-flex; align-items:center; gap:8px;">
+              Importar respaldo
+              <input id="importFile" type="file" accept="application/json" style="display:none;">
+            </label>
+<button class="btn" id="btnSyncPull">Sync ⬇</button>
+<button class="btn primary" id="btnSyncPush">Sync ⬆</button>
+            <button class="btn danger" id="btnLogout">Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <!-- ========= INVENTARIO ========= -->
+      <section id="tab-inventario">
+        <div class="grid">
+          <div class="card">
+            <div class="hd">
+              <div>
+                <h3 class="title">Inventario</h3>
+                <p class="sub">Agrega productos, costo de inversión, cantidad disponible y foto (miniatura con vista grande).</p>
+              </div>
+              <div class="tag good" id="invCountTag">—</div>
+            </div>
+            <div class="bd">
+              <div class="tablewrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th class="nowrap">Foto</th>
+                      <th>Producto / Descripción</th>
+                      <th class="right nowrap">Costo inversión (u)</th>
+                      <th class="right nowrap">Cantidad</th>
+                      <th class="right nowrap">Invertido</th>
+                      <th class="right nowrap">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="invTbody"></tbody>
+                </table>
+              </div>
+              <div class="mini" style="margin-top:10px;">
+                Tip: al registrar una venta, el sistema descuenta unidades del inventario automáticamente.
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="hd">
+              <div>
+                <h3 class="title" id="invFormTitle">Agregar producto</h3>
+                <p class="sub">Estructura lista para crecer (múltiples productos).</p>
+              </div>
+            </div>
+            <div class="bd">
+              <div class="field">
+                <label for="pName">Producto / Descripción</label>
+                <input id="pName" placeholder="Ej: PASAMONTAÑA BALACLAVA" />
+              </div>
+
+              <div class="split">
+                <div class="field">
+                  <label for="pCost">Costo de inversión (por unidad)</label>
+                  <input id="pCost" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" />
+                </div>
+                <div class="field">
+                  <label for="pQty">Cantidad disponible</label>
+                  <input id="pQty" type="number" inputmode="numeric" step="1" min="0" placeholder="0" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="pPhoto">Foto (se verá pequeña; click para ver grande)</label>
+                <input id="pPhoto" type="file" accept="image/*" />
+                <div class="help">Se guarda dentro del sistema (dataURL). Recomendado: fotos ligeras.</div>
+              </div>
+
+              <div class="split">
+                <button class="btn primary" id="btnSaveProduct">Guardar</button>
+                <button class="btn" id="btnCancelEdit" style="display:none;">Cancelar edición</button>
+              </div>
+
+              <div class="sep"></div>
+              <div class="note">
+                Seguridad: la contraseña NO está escrita en el archivo; se valida con PBKDF2+SHA-256. Tus datos (inventario/ventas) se guardan cifrados (AES-GCM).
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========= VENTAS ========= -->
+      <section id="tab-ventas" style="display:none;">
+        <div class="grid">
+          <div class="card">
+            <div class="hd">
+              <div>
+                <h3 class="title">Registrar venta</h3>
+                <p class="sub">Selecciona producto y captura unidades, costo de venta, envío y descuento. Calcula total y ganancia.</p>
+              </div>
+              <div class="tag warn" id="todayTag">Hoy: —</div>
+            </div>
+            <div class="bd">
+              <div class="field">
+                <label for="sProduct">Producto (desde inventario)</label>
+                <select id="sProduct"></select>
+              </div>
+
+              <div class="split">
+                <div class="field">
+                  <label for="sUnits">Unidades vendidas</label>
+                  <input id="sUnits" type="number" inputmode="numeric" step="1" min="1" value="1" />
+                </div>
+                <div class="field">
+                  <label for="sPrice">Costo de venta (por unidad)</label>
+                  <input id="sPrice" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" />
+                </div>
+              </div>
+
+              <div class="split">
+                <div class="field">
+                  <label for="sShip">Costo de envío</label>
+                  <input id="sShip" type="number" inputmode="decimal" step="0.01" min="0" value="0" />
+                </div>
+                <div class="field">
+                  <label for="sDisc">Descuento</label>
+                  <input id="sDisc" type="number" inputmode="decimal" step="0.01" min="0" value="0" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="sDate">Fecha / hora (se guarda con esto)</label>
+                <input id="sDate" type="datetime-local" />
+              </div>
+
+              <div class="kpi">
+                <div class="box">
+                  <p class="n" id="kTotalSale">—</p>
+                  <p class="l">Total venta</p>
+                </div>
+                <div class="box">
+                  <p class="n" id="kProfit">—</p>
+                  <p class="l">Ganancia</p>
+                </div>
+              </div>
+
+              <button class="btn primary" id="btnAddSale">Registrar venta</button>
+              <div class="help" id="saleHelp"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="hd">
+              <div>
+                <h3 class="title">Ventas (filtrado)</h3>
+                <p class="sub">Por defecto: ventas del día. Puedes cambiar la fecha para revisar.</p>
+              </div>
+            </div>
+            <div class="bd">
+              <div class="split">
+                <div class="field">
+                  <label for="salesDay">Ver ventas del día</label>
+                  <input id="salesDay" type="date" />
+                </div>
+                <div class="field">
+                  <label>&nbsp;</label>
+                  <button class="btn" id="btnGoToday">Ir a hoy</button>
+                </div>
+              </div>
+
+              <div class="tablewrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Producto</th>
+                      <th class="right nowrap">Unid</th>
+                      <th class="right nowrap">Total</th>
+                      <th class="right nowrap">Ganancia</th>
+                      <th class="right nowrap">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="salesTbody"></tbody>
+                </table>
+              </div>
+
+              <div class="mini" style="margin-top:10px;">
+                Nota: eliminar una venta revierte las unidades al inventario automáticamente.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========= RESUMEN ========= -->
+      <section id="tab-resumen" style="display:none;">
+        <div class="grid">
+          <div class="card">
+            <div class="hd">
+              <div>
+                <h3 class="title">Resumen inteligente</h3>
+                <p class="sub">Filtros por fecha (de… a…). Ideal para cierre diario, semanal o mensual.</p>
+              </div>
+            </div>
+            <div class="bd">
+              <div class="split">
+                <div class="field">
+                  <label for="rFrom">Desde</label>
+                  <input id="rFrom" type="date" />
+                </div>
+                <div class="field">
+                  <label for="rTo">Hasta</label>
+                  <input id="rTo" type="date" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="rMonth">Filtro rápido por mes</label>
+                <input id="rMonth" type="month" />
+                <div class="help">Si seleccionas un mes, se ajusta automáticamente “Desde/Hasta”.</div>
+              </div>
+
+              <div class="split">
+                <button class="btn primary" id="btnApplyRange">Aplicar filtros</button>
+                <button class="btn" id="btnRangeAll">Ver todo</button>
+              </div>
+
+              <div class="sep"></div>
+
+              <div class="kpi">
+                <div class="box">
+                  <p class="n" id="rInvTotal">—</p>
+                  <p class="l">Total invertido (inventario)</p>
+                </div>
+                <div class="box">
+                  <p class="n" id="rQtyTotal">—</p>
+                  <p class="l">Total productos disponibles</p>
+                </div>
+              </div>
+
+              <div class="kpi">
+                <div class="box">
+                  <p class="n" id="rSalesCount">—</p>
+                  <p class="l">Ventas hechas (rango)</p>
+                </div>
+                <div class="box">
+                  <p class="n" id="rProfitTotal">—</p>
+                  <p class="l">Total de ganancias (rango)</p>
+                </div>
+              </div>
+
+              <div class="kpi">
+                <div class="box">
+                  <p class="n" id="rRevenueTotal">—</p>
+                  <p class="l">Total vendido (rango)</p>
+                </div>
+                <div class="box">
+                  <p class="n" id="rShipSum">—</p>
+                  <p class="l">Total envíos cobrados (rango)</p>
+                </div>
+              </div>
+
+              <div class="mini" id="rangeLabel">—</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="hd">
+              <div>
+                <h3 class="title">Envíos cobrados — desglose</h3>
+                <p class="sub">Cuántos envíos de 80, 90, 100, 120… y el rango de fechas actual.</p>
+              </div>
+            </div>
+            <div class="bd">
+              <div class="tablewrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th class="nowrap">Costo envío</th>
+                      <th class="right nowrap">Cantidad</th>
+                      <th class="right nowrap">Suma</th>
+                    </tr>
+                  </thead>
+                  <tbody id="shipTbody"></tbody>
+                </table>
+              </div>
+
+              <div class="sep"></div>
+
+              <div class="mini">
+                Recomendación: usa el respaldo cifrado diariamente. Si cambias de PC/teléfono, importas el respaldo y listo.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">
+        Hecho Dev @Brayan Raudales • Datos locales cifrados • UI profesional
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL IMAGE -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modalCard">
+      <div class="modalHd">
+        <div class="t" id="modalTitle">Imagen</div>
+        <button class="btn" id="btnCloseModal">Cerrar</button>
+      </div>
+      <div class="modalBd">
+        <img id="modalImg" class="modalImg" alt="Vista grande" />
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    /******************************************************************
+     *  ⚠️ SEGURIDAD (100% HONESTO):
+     *  - En GitHub Pages, todo corre en el navegador (cliente).
+     *  - Si alguien te roba el HTML y lo edita, NO hay forma de impedirlo.
+     *  - Lo que sí hacemos:
+     *      ✅ No guardamos la contraseña en texto plano (PBKDF2 + SHA-256)
+     *      ✅ Ciframos datos en localStorage (AES-GCM) con tu contraseña
+     ******************************************************************/
+
+    // ====== Credenciales (NO password en texto plano) ======
+    const AUTH_USER = "itemshn";
+    const PBKDF2_ITERATIONS = 200000;
+
+    // Salt (Base64) y verificador (Base64 = SHA-256(derivadoPBKDF2))
+    // Generado para tu password real, pero aquí NO aparece el password.
+    const AUTH_SALT_B64 = "cytgYn0U49rp8OasYkC1GA==";
+    const AUTH_VERIFIER_B64 = "Kna26VYm6IwHzFvnuFz9656+TOGGKzDEUiesz/gp7V0=";
+
+    // ====== Storage key ======
+    const STORAGE_KEY = "ii_secure_blob_v1";
+
+
+    // ====== GitHub Cloud Sync (archivo cifrado en el repo) ======
+// Rellena estos 4 datos:
+const GH_OWNER  = "xxbrsdwd";
+const GH_REPO   = "TU_REPO";
+const GH_BRANCH = "main";
+const GH_PATH   = "data/secure_blob.json"; // se guarda aquí dentro del repo
+
+function getGithubToken(){
+  // Token SOLO en sesión (no queda guardado permanente)
+  return sessionStorage.getItem("ii_gh_token") || "";
+}
+async function ensureGithubToken(){
+  let t = getGithubToken();
+  if(t) return t;
+
+  t = prompt("Pega tu GitHub Token (solo se guardará en esta sesión):");
+  if(!t) throw new Error("Token requerido para sincronizar.");
+  sessionStorage.setItem("ii_gh_token", t.trim());
+  return t.trim();
+}
+
+function ghHeaders(token){
+  return {
+    "Accept": "application/vnd.github+json",
+    "Authorization": "Bearer " + token
+  };
+}
+
+async function ghGetFile(){
+  const token = await ensureGithubToken();
+  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(GH_PATH)}?ref=${encodeURIComponent(GH_BRANCH)}`;
+  const r = await fetch(url, { headers: ghHeaders(token) });
+
+  if(r.status === 404) return null; // aún no existe
+  if(!r.ok) throw new Error("Error GitHub GET: " + r.status);
+
+  const j = await r.json();
+  const content = atob((j.content || "").replace(/\n/g,""));
+  return { text: content, sha: j.sha };
+}
+
+async function ghPutFile(text, sha=null){
+  const token = await ensureGithubToken();
+  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(GH_PATH)}`;
+
+  const body = {
+    message: `sync secure blob ${new Date().toISOString()}`,
+    content: btoa(unescape(encodeURIComponent(text))), // base64 utf-8 safe
+    branch: GH_BRANCH
+  };
+  if(sha) body.sha = sha;
+
+  const r = await fetch(url, {
+    method: "PUT",
+    headers: { ...ghHeaders(token), "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  if(!r.ok){
+    const t = await r.text().catch(()=> "");
+    throw new Error("Error GitHub PUT: " + r.status + " " + t);
+  }
+  return await r.json();
+}
+
+// Pull: baja el blob cifrado y lo aplica localmente
+async function syncPull(){
+  const remote = await ghGetFile();
+  if(!remote){
+    toast("No existe archivo remoto aún. Usa Sync ⬆ para subir el primero.");
+    return;
+  }
+
+  // Guarda el blob cifrado como localStorage (sin descifrar aquí)
+  const payload = JSON.parse(remote.text);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+
+  // Luego cargamos y desciframos con tu clave actual
+  await loadDbOrInit();
+  renderInventory();
+  renderSalesDay();
+  renderSummary();
+  toast("Sync ⬇ listo ✅");
+}
+
+// Push: sube el blob cifrado local a GitHub
+async function syncPush(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw){
+    toast("No hay datos locales para subir.");
+    return;
+  }
+
+  const remote = await ghGetFile();
+  const sha = remote ? remote.sha : null;
+
+  // Subimos exactamente lo que hay (ya cifrado)
+  await ghPutFile(raw, sha);
+  toast("Sync ⬆ listo ✅");
+}
+
+
+    // ====== Estado en memoria ======
+    let masterAesKey = null; // AES-GCM key (derivada)
+    let masterBytes = null;  // Uint8Array derivado PBKDF2 (solo en memoria)
+    let db = null;           // { inventory: [], sales: [], meta: {} }
+    let editingProductId = null;
+
+    // ====== Utilidades ======
+    const $ = (id) => document.getElementById(id);
+
+    function toast(msg, ms=2600){
+      const t = $("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(toast._tm);
+      toast._tm = setTimeout(() => t.style.display = "none", ms);
+    }
+
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function toLocalDatetimeValue(date){
+      const d = new Date(date);
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+    function todayDateValue(){
+      const d = new Date();
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    }
+
+    function num(v){
+      const x = Number(v);
+      return Number.isFinite(x) ? x : 0;
+    }
+
+    function money(v){
+      // Puedes cambiar el prefijo si quieres: "L " o "$ "
+      return "L " + (Math.round((v + Number.EPSILON) * 100) / 100).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+
+    function b64FromBytes(u8){
+      let s = "";
+      for (let i=0; i<u8.length; i++) s += String.fromCharCode(u8[i]);
+      return btoa(s);
+    }
+    function bytesFromB64(b64){
+      const bin = atob(b64);
+      const u8 = new Uint8Array(bin.length);
+      for (let i=0; i<bin.length; i++) u8[i] = bin.charCodeAt(i);
+      return u8;
+    }
+
+    function uid(prefix="id"){
+      return prefix + "_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+    }
+
+    function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+
+    // ====== Crypto ======
+    async function pbkdf2Bytes(password, saltBytes, iterations, length=32){
+      const enc = new TextEncoder();
+      const passKey = await crypto.subtle.importKey(
+        "raw",
+        enc.encode(password),
+        "PBKDF2",
+        false,
+        ["deriveBits"]
+      );
+
+      const bits = await crypto.subtle.deriveBits(
+        { name:"PBKDF2", salt: saltBytes, iterations, hash:"SHA-256" },
+        passKey,
+        length * 8
+      );
+      return new Uint8Array(bits);
+    }
+
+    async function sha256Bytes(u8){
+      const digest = await crypto.subtle.digest("SHA-256", u8);
+      return new Uint8Array(digest);
+    }
+
+    async function importAesKeyFromRaw(rawBytes){
+      return await crypto.subtle.importKey(
+        "raw",
+        rawBytes,
+        { name: "AES-GCM" },
+        false,
+        ["encrypt","decrypt"]
+      );
+    }
+
+    async function encryptJson(obj){
+      if(!masterAesKey) throw new Error("No key");
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const enc = new TextEncoder();
+      const plain = enc.encode(JSON.stringify(obj));
+
+      const ct = await crypto.subtle.encrypt(
+        { name:"AES-GCM", iv },
+        masterAesKey,
+        plain
+      );
+
+      return {
+        v: 1,
+        iv: b64FromBytes(iv),
+        ct: b64FromBytes(new Uint8Array(ct)),
+      };
+    }
+
+    async function decryptJson(blob){
+      if(!masterAesKey) throw new Error("No key");
+      const iv = bytesFromB64(blob.iv);
+      const ct = bytesFromB64(blob.ct);
+
+      const pt = await crypto.subtle.decrypt(
+        { name:"AES-GCM", iv },
+        masterAesKey,
+        ct
+      );
+
+      const dec = new TextDecoder();
+      return JSON.parse(dec.decode(new Uint8Array(pt)));
+    }
+
+    async function saveDb(){
+      const blob = await encryptJson(db);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(blob));
+    }
+
+    async function loadDbOrInit(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw){
+        db = {
+          inventory: [
+            {
+              id: uid("p"),
+              name: "PASAMONTAÑA BALACLAVA",
+              unitCost: 0,
+              qty: 0,
+              photo: "",
+              createdAt: new Date().toISOString()
+            }
+          ],
+          sales: [],
+          meta: {
+            createdAt: new Date().toISOString(),
+            version: 1
+          }
+        };
+        await saveDb();
+        return;
+      }
+      const blob = JSON.parse(raw);
+      db = await decryptJson(blob);
+      // sane defaults
+      db.inventory ||= [];
+      db.sales ||= [];
+      db.meta ||= { version: 1 };
+    }
+
+    // ====== Login / Session ======
+    function showApp(){
+      $("loginView").style.display = "none";
+      $("loginView").setAttribute("aria-hidden","true");
+      $("appView").style.display = "block";
+      $("appView").setAttribute("aria-hidden","false");
+    }
+    function showLogin(){
+      $("appView").style.display = "none";
+      $("appView").setAttribute("aria-hidden","true");
+      $("loginView").style.display = "grid";
+      $("loginView").setAttribute("aria-hidden","false");
+    }
+
+    function lockNow(){
+      masterAesKey = null;
+      masterBytes = null;
+      db = null;
+      sessionStorage.removeItem("ii_auth_ok");
+      showLogin();
+      $("loginPass").value = "";
+      toast("Sesión cerrada ✅");
+    }
+
+    // Auto-lock por inactividad (10 min)
+    const IDLE_MS = 10 * 60 * 1000;
+    let idleTimer = null;
+    function resetIdle(){
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        lockNow();
+      }, IDLE_MS);
+    }
+    ["click","keydown","mousemove","touchstart"].forEach(evt => {
+      window.addEventListener(evt, () => {
+        if(masterAesKey) resetIdle();
+      }, { passive:true });
+    });
+
+    async function login(user, pass){
+      if(!user || !pass) throw new Error("Completa usuario y contraseña.");
+      if(user !== AUTH_USER) throw new Error("Usuario o contraseña incorrectos.");
+
+      const salt = bytesFromB64(AUTH_SALT_B64);
+      const derived = await pbkdf2Bytes(pass, salt, PBKDF2_ITERATIONS, 32);
+      const ver = await sha256Bytes(derived);
+      const verB64 = b64FromBytes(ver);
+
+      if(verB64 !== AUTH_VERIFIER_B64) throw new Error("Usuario o contraseña incorrectos.");
+
+      // OK
+      masterBytes = derived;
+      masterAesKey = await importAesKeyFromRaw(masterBytes);
+      sessionStorage.setItem("ii_auth_ok", "1");
+      resetIdle();
+    }
+
+    // ====== UI Tabs ======
+    function setActiveTab(tab){
+      document.querySelectorAll(".tab").forEach(b => {
+        const on = (b.dataset.tab === tab);
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      $("tab-inventario").style.display = (tab==="inventario") ? "block" : "none";
+      $("tab-ventas").style.display      = (tab==="ventas") ? "block" : "none";
+      $("tab-resumen").style.display     = (tab==="resumen") ? "block" : "none";
+    }
+
+    // ====== Imagen: resize para no inflar storage ======
+    async function fileToDataUrlResized(file, maxW=900, maxH=900, quality=0.82){
+      const dataUrl = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result));
+        r.onerror = () => rej(new Error("No se pudo leer la imagen."));
+        r.readAsDataURL(file);
+      });
+
+      const img = await new Promise((res, rej) => {
+        const i = new Image();
+        i.onload = () => res(i);
+        i.onerror = () => rej(new Error("Imagen inválida."));
+        i.src = dataUrl;
+      });
+
+      const scale = Math.min(1, maxW / img.width, maxH / img.height);
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+
+      // JPEG reduce más, pero PNG conserva transparencias; usamos JPEG por defecto.
+      return canvas.toDataURL("image/jpeg", quality);
+    }
+
+    // ====== INVENTARIO ======
+    function invTotalInvested(){
+      return db.inventory.reduce((acc,p) => acc + (num(p.unitCost) * num(p.qty)), 0);
+    }
+    function invTotalQty(){
+      return db.inventory.reduce((acc,p) => acc + num(p.qty), 0);
+    }
+
+    function findProduct(id){
+      return db.inventory.find(p => p.id === id);
+    }
+
+    function renderInventory(){
+      const tbody = $("invTbody");
+      tbody.innerHTML = "";
+
+      if(db.inventory.length === 0){
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="6" class="muted">No hay productos. Agrega el primero.</td>`;
+        tbody.appendChild(tr);
+      }else{
+        for(const p of db.inventory){
+          const invested = num(p.unitCost) * num(p.qty);
+          const tr = document.createElement("tr");
+
+          const thumb = p.photo
+            ? `<img class="thumb" data-img="${p.id}" src="${p.photo}" alt="Foto producto">`
+            : `<div class="thumb" data-img="${p.id}" title="Sin foto" style="display:grid;place-items:center;cursor:pointer;">🖼️</div>`;
+
+          const qty = num(p.qty);
+          const qtyTag = qty > 0 ? `<span class="tag good">Stock: ${qty}</span>` : `<span class="tag bad">Stock: 0</span>`;
+
+          tr.innerHTML = `
+            <td class="nowrap">${thumb}</td>
+            <td>
+              <div style="font-weight:950; letter-spacing:.2px;">${escapeHtml(p.name || "")}</div>
+              <div class="mini">${qtyTag}</div>
+            </td>
+            <td class="right nowrap">${money(num(p.unitCost))}</td>
+            <td class="right nowrap">${qty}</td>
+            <td class="right nowrap">${money(invested)}</td>
+            <td class="right nowrap">
+              <button class="btn" data-edit="${p.id}">Editar</button>
+              <button class="btn danger" data-del="${p.id}">Eliminar</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+
+      $("invCountTag").textContent = `Productos: ${db.inventory.length} • Unidades: ${invTotalQty()}`;
+      refreshSalesProductDropdown();
+      wireInventoryActions();
+      updateAllSummaries();
+    }
+
+    function wireInventoryActions(){
+      document.querySelectorAll("[data-edit]").forEach(btn => {
+        btn.onclick = () => startEditProduct(btn.getAttribute("data-edit"));
+      });
+      document.querySelectorAll("[data-del]").forEach(btn => {
+        btn.onclick = () => deleteProduct(btn.getAttribute("data-del"));
+      });
+      document.querySelectorAll("[data-img]").forEach(el => {
+        el.onclick = () => openProductImage(el.getAttribute("data-img"));
+      });
+    }
+
+    function startEditProduct(id){
+      const p = findProduct(id);
+      if(!p) return;
+
+      editingProductId = id;
+      $("invFormTitle").textContent = "Editar producto";
+      $("pName").value = p.name || "";
+      $("pCost").value = String(num(p.unitCost));
+      $("pQty").value = String(num(p.qty));
+      $("pPhoto").value = ""; // no podemos setear file input por seguridad
+      $("btnCancelEdit").style.display = "inline-block";
+      toast("Editando producto…");
+    }
+
+    async function deleteProduct(id){
+      const p = findProduct(id);
+      if(!p) return;
+
+      // Si hay ventas asociadas, no lo borramos (para no romper historial)
+      const used = db.sales.some(s => s.productId === id);
+      if(used){
+        toast("No se puede eliminar: ya tiene ventas registradas. Edita el nombre si quieres.");
+        return;
+      }
+
+      if(!confirm(`Eliminar producto "${p.name}"?`)) return;
+
+      db.inventory = db.inventory.filter(x => x.id !== id);
+      await saveDb();
+      renderInventory();
+      toast("Producto eliminado ✅");
+    }
+
+    function openProductImage(id){
+      const p = findProduct(id);
+      if(!p) return;
+      if(!p.photo){
+        toast("Ese producto no tiene foto todavía.");
+        return;
+      }
+      $("modalTitle").textContent = p.name || "Imagen";
+      $("modalImg").src = p.photo;
+      $("modal").style.display = "flex";
+      $("modal").setAttribute("aria-hidden","false");
+    }
+
+    $("btnCloseModal").onclick = () => {
+      $("modal").style.display = "none";
+      $("modal").setAttribute("aria-hidden","true");
+      $("modalImg").src = "";
+    };
+    $("modal").addEventListener("click", (e) => {
+      if(e.target === $("modal")) $("btnCloseModal").click();
+    });
+
+    async function saveProductFromForm(){
+      const name = ($("pName").value || "").trim();
+      const unitCost = clamp(num($("pCost").value), 0, 1e12);
+      const qty = Math.floor(clamp(num($("pQty").value), 0, 1e9));
+
+      if(!name){
+        toast("Pon el nombre / descripción del producto.");
+        return;
+      }
+
+      let photo = "";
+      const file = $("pPhoto").files && $("pPhoto").files[0];
+      if(file){
+        try{
+          photo = await fileToDataUrlResized(file, 900, 900, 0.84);
+        }catch(err){
+          toast(err.message || "No se pudo procesar la foto.");
+          return;
+        }
+      }
+
+      if(editingProductId){
+        const p = findProduct(editingProductId);
+        if(!p) return;
+
+        p.name = name;
+        p.unitCost = unitCost;
+        p.qty = qty;
+        if(photo) p.photo = photo; // solo reemplaza si se cargó nueva
+        p.updatedAt = new Date().toISOString();
+
+        editingProductId = null;
+        $("invFormTitle").textContent = "Agregar producto";
+        $("btnCancelEdit").style.display = "none";
+        toast("Producto actualizado ✅");
+      }else{
+        db.inventory.unshift({
+          id: uid("p"),
+          name,
+          unitCost,
+          qty,
+          photo: photo || "",
+          createdAt: new Date().toISOString()
+        });
+        toast("Producto agregado ✅");
+      }
+
+      // limpiar form
+      $("pName").value = "";
+      $("pCost").value = "";
+      $("pQty").value = "";
+      $("pPhoto").value = "";
+
+      await saveDb();
+      renderInventory();
+    }
+
+    $("btnSaveProduct").onclick = saveProductFromForm;
+    $("btnCancelEdit").onclick = () => {
+      editingProductId = null;
+      $("invFormTitle").textContent = "Agregar producto";
+      $("btnCancelEdit").style.display = "none";
+      $("pName").value = "";
+      $("pCost").value = "";
+      $("pQty").value = "";
+      $("pPhoto").value = "";
+      toast("Edición cancelada.");
+    };
+
+    // ====== VENTAS ======
+    function refreshSalesProductDropdown(){
+      const sel = $("sProduct");
+      sel.innerHTML = "";
+      for(const p of db.inventory){
+        const opt = document.createElement("option");
+        const q = Math.floor(num(p.qty));
+        opt.value = p.id;
+        opt.textContent = `${p.name} (stock: ${q})`;
+        sel.appendChild(opt);
+      }
+      if(db.inventory.length === 0){
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "No hay productos — agrega uno en Inventario";
+        sel.appendChild(opt);
+      }
+      updateSalePreview();
+    }
+
+    function calcSaleTotals(){
+      const productId = $("sProduct").value;
+      const p = findProduct(productId);
+
+      const units = Math.floor(clamp(num($("sUnits").value), 1, 1e9));
+      const salePrice = clamp(num($("sPrice").value), 0, 1e12);
+      const ship = clamp(num($("sShip").value), 0, 1e12);
+      const disc = clamp(num($("sDisc").value), 0, 1e12);
+
+      const totalSale = (units * salePrice) + ship - disc;
+
+      // Ganancia = totalVenta - costoEnvio - (costoInversionPorUnidad * unidades)
+      const unitCost = p ? clamp(num(p.unitCost), 0, 1e12) : 0;
+      const profit = totalSale - ship - (unitCost * units);
+
+      return { p, units, salePrice, ship, disc, totalSale, profit };
+    }
+
+    function updateSalePreview(){
+      const { p, units, totalSale, profit } = calcSaleTotals();
+      $("kTotalSale").textContent = money(totalSale);
+      $("kProfit").textContent = money(profit);
+
+      const help = $("saleHelp");
+      if(!p){
+        help.textContent = "Agrega un producto en Inventario para poder registrar ventas.";
+        help.style.color = "rgba(255,204,102,.95)";
+        return;
+      }
+      const stock = Math.floor(num(p.qty));
+      const ok = (units <= stock);
+      help.innerHTML = ok
+        ? `Stock actual: <b>${stock}</b> • Se descontarán <b>${units}</b> unidades al registrar la venta.`
+        : `⚠️ Stock insuficiente: stock <b>${stock}</b>, quieres vender <b>${units}</b>.`;
+      help.style.color = ok ? "rgba(77,225,163,.95)" : "rgba(255,204,102,.95)";
+    }
+
+    ["sProduct","sUnits","sPrice","sShip","sDisc","sDate"].forEach(id => {
+      $(id).addEventListener("input", updateSalePreview);
+      $(id).addEventListener("change", updateSalePreview);
+    });
+
+    async function addSale(){
+      const productId = $("sProduct").value;
+      const p = findProduct(productId);
+      if(!p){
+        toast("No hay producto seleccionado.");
+        return;
+      }
+
+      const { units, salePrice, ship, disc, totalSale, profit } = calcSaleTotals();
+      if(units <= 0){
+        toast("Unidades vendidas debe ser mayor a 0.");
+        return;
+      }
+      if(salePrice <= 0){
+        toast("Pon el costo de venta (por unidad).");
+        return;
+      }
+
+      const stock = Math.floor(num(p.qty));
+      if(units > stock){
+        toast("Stock insuficiente. Ajusta unidades.");
+        return;
+      }
+
+      const dt = $("sDate").value ? new Date($("sDate").value) : new Date();
+      const iso = dt.toISOString();
+
+      // Descuenta inventario
+      p.qty = stock - units;
+
+      // Guarda venta
+      db.sales.unshift({
+        id: uid("s"),
+        createdAt: iso,
+        productId,
+        productName: p.name,
+        unitCostAtSale: num(p.unitCost), // snapshot
+        units,
+        salePrice,
+        ship,
+        disc,
+        totalSale,
+        profit
+      });
+
+      await saveDb();
+      renderInventory();      // refresca stock
+      renderSalesDay();       // refresca lista ventas del día
+      updateAllSummaries();
+
+      toast("Venta registrada ✅");
+
+      // Reset form (mantiene producto)
+      $("sUnits").value = "1";
+      $("sShip").value = "0";
+      $("sDisc").value = "0";
+      $("sPrice").focus();
+      updateSalePreview();
+    }
+
+    $("btnAddSale").onclick = addSale;
+
+    function dateOnlyKey(isoOrDate){
+      const d = new Date(isoOrDate);
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    }
+
+    function inDateRange(iso, fromDateValue, toDateValue){
+      // from/to son "YYYY-MM-DD"
+      const d = new Date(iso);
+      const t = d.getTime();
+
+      let ok = true;
+      if(fromDateValue){
+        const from = new Date(fromDateValue + "T00:00:00");
+        ok = ok && (t >= from.getTime());
+      }
+      if(toDateValue){
+        const to = new Date(toDateValue + "T23:59:59");
+        ok = ok && (t <= to.getTime());
+      }
+      return ok;
+    }
+
+    function renderSalesDay(){
+      const day = $("salesDay").value || todayDateValue();
+      $("salesDay").value = day;
+
+      const tbody = $("salesTbody");
+      tbody.innerHTML = "";
+
+      const sales = db.sales.filter(s => dateOnlyKey(s.createdAt) === day);
+
+      if(sales.length === 0){
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="6" class="muted">No hay ventas registradas para ${day}.</td>`;
+        tbody.appendChild(tr);
+      }else{
+        for(const s of sales){
+          const tr = document.createElement("tr");
+          const d = new Date(s.createdAt);
+          const pretty = `${pad2(d.getDate())}/${pad2(d.getMonth()+1)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+          tr.innerHTML = `
+            <td class="nowrap">${pretty}</td>
+            <td>${escapeHtml(s.productName || "")}</td>
+            <td class="right nowrap">${Math.floor(num(s.units))}</td>
+            <td class="right nowrap">${money(num(s.totalSale))}</td>
+            <td class="right nowrap">${money(num(s.profit))}</td>
+            <td class="right nowrap">
+              <button class="btn danger" data-del-sale="${s.id}">Eliminar</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+
+      $("todayTag").textContent = `Día: ${day} • Ventas: ${sales.length}`;
+
+      document.querySelectorAll("[data-del-sale]").forEach(btn => {
+        btn.onclick = () => deleteSale(btn.getAttribute("data-del-sale"));
+      });
+    }
+
+    async function deleteSale(saleId){
+      const s = db.sales.find(x => x.id === saleId);
+      if(!s) return;
+
+      if(!confirm("Eliminar esta venta? (Se revertirá el stock)")) return;
+
+      // Revertir stock al producto (si existe)
+      const p = findProduct(s.productId);
+      if(p){
+        p.qty = Math.floor(num(p.qty)) + Math.floor(num(s.units));
+      }
+
+      db.sales = db.sales.filter(x => x.id !== saleId);
+
+      await saveDb();
+      renderInventory();
+      renderSalesDay();
+      updateAllSummaries();
+      toast("Venta eliminada (stock revertido) ✅");
+    }
+
+    $("btnGoToday").onclick = () => {
+      $("salesDay").value = todayDateValue();
+      renderSalesDay();
+    };
+    $("salesDay").addEventListener("change", renderSalesDay);
+
+    // ====== RESUMEN ======
+    function setRangeLabel(from, to){
+      const f = from ? from : "—";
+      const t = to ? to : "—";
+      $("rangeLabel").textContent = `Rango aplicado: ${f} → ${t}`;
+    }
+
+    function renderSummary(){
+      const from = $("rFrom").value || "";
+      const to = $("rTo").value || "";
+
+      // Inventario siempre es “actual”
+      $("rInvTotal").textContent = money(invTotalInvested());
+      $("rQtyTotal").textContent = String(invTotalQty());
+
+      const salesInRange = db.sales.filter(s => inDateRange(s.createdAt, from, to));
+      const salesCount = salesInRange.length;
+      const profitTotal = salesInRange.reduce((a,s) => a + num(s.profit), 0);
+      const revenueTotal = salesInRange.reduce((a,s) => a + num(s.totalSale), 0);
+      const shipSum = salesInRange.reduce((a,s) => a + num(s.ship), 0);
+
+      $("rSalesCount").textContent = String(salesCount);
+      $("rProfitTotal").textContent = money(profitTotal);
+      $("rRevenueTotal").textContent = money(revenueTotal);
+      $("rShipSum").textContent = money(shipSum);
+
+      setRangeLabel(from || "inicio", to || "hoy");
+
+      // Desglose envíos
+      const map = new Map(); // shipCost -> {count,sum}
+      for(const s of salesInRange){
+        const k = String(Math.round(num(s.ship)*100)/100);
+        const prev = map.get(k) || { count:0, sum:0 };
+        prev.count += 1;
+        prev.sum += num(s.ship);
+        map.set(k, prev);
+      }
+
+      const tbody = $("shipTbody");
+      tbody.innerHTML = "";
+
+      const entries = Array.from(map.entries())
+        .map(([k,v]) => ({ ship: num(k), count: v.count, sum: v.sum }))
+        .sort((a,b) => a.ship - b.ship);
+
+      if(entries.length === 0){
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="3" class="muted">No hay envíos en este rango.</td>`;
+        tbody.appendChild(tr);
+      }else{
+        for(const e of entries){
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="nowrap">${money(e.ship)}</td>
+            <td class="right nowrap">${e.count}</td>
+            <td class="right nowrap">${money(e.sum)}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+    }
+
+    function updateAllSummaries(){
+      // Ventas
+      $("pillUser").textContent = AUTH_USER;
+      // Inventario tag se actualiza en renderInventory()
+      // Resumen:
+      renderSummary();
+    }
+
+    $("btnApplyRange").onclick = () => {
+      $("rMonth").value = "";
+      renderSummary();
+      toast("Filtro aplicado ✅");
+    };
+    $("btnRangeAll").onclick = () => {
+      $("rFrom").value = "";
+      $("rTo").value = "";
+      $("rMonth").value = "";
+      renderSummary();
+      toast("Mostrando todo ✅");
+    };
+
+    $("rMonth").addEventListener("change", () => {
+      const m = $("rMonth").value; // YYYY-MM
+      if(!m) return;
+      const [yy, mm] = m.split("-").map(Number);
+      const first = new Date(yy, mm-1, 1);
+      const last = new Date(yy, mm, 0); // día 0 del mes siguiente = último día del mes actual
+      $("rFrom").value = `${yy}-${pad2(mm)}-01`;
+      $("rTo").value = `${yy}-${pad2(mm)}-${pad2(last.getDate())}`;
+      renderSummary();
+      toast("Mes aplicado ✅");
+    });
+
+    // ====== Export / Import ======
+    $("btnExport").onclick = async () => {
+      try{
+        // Exporta el blob cifrado tal cual está en localStorage (seguro para enviar/guardar)
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw){
+          toast("No hay datos para exportar.");
+          return;
+        }
+        const blob = {
+          exportedAt: new Date().toISOString(),
+          storageKey: STORAGE_KEY,
+          payload: JSON.parse(raw)
+        };
+        const file = new Blob([JSON.stringify(blob, null, 2)], { type:"application/json" });
+        const a = document.createElement("a");
+        const stamp = dateOnlyKey(new Date());
+        a.href = URL.createObjectURL(file);
+        a.download = `backup_inventario_ventas_${stamp}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        toast("Respaldo exportado ✅");
+      }catch(err){
+        toast("Error exportando respaldo.");
+      }
+    };
+
+    $("importFile").addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      try{
+        const text = await file.text();
+        const obj = JSON.parse(text);
+        if(!obj || !obj.payload || !obj.payload.iv || !obj.payload.ct){
+          toast("Archivo inválido.");
+          e.target.value = "";
+          return;
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(obj.payload));
+        await loadDbOrInit(); // prueba descifrado con tu clave actual
+        renderInventory();
+        $("salesDay").value = todayDateValue();
+        renderSalesDay();
+        renderSummary();
+        toast("Respaldo importado ✅");
+      }catch(err){
+        toast("No se pudo importar (archivo corrupto o clave incorrecta).");
+      }finally{
+        e.target.value = "";
+      }
+    });
+
+    // ====== Logout ======
+    $("btnLogout").onclick = lockNow;
+
+$("btnSyncPull").onclick = async () => {
+  try{ await syncPull(); }
+  catch(e){ toast(e.message || "Falló Sync ⬇"); }
+};
+
+$("btnSyncPush").onclick = async () => {
+  try{ await syncPush(); }
+  catch(e){ toast(e.message || "Falló Sync ⬆"); }
+};
+
+
+    // ====== Helpers ======
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // ====== INIT ======
+    async function initAfterLogin(){
+      $("pillUser").textContent = AUTH_USER;
+
+      // Setup default dates
+      $("salesDay").value = todayDateValue();
+      $("sDate").value = toLocalDatetimeValue(new Date());
+      $("rTo").value = todayDateValue();
+
+      // Carga DB
+      await loadDbOrInit();
+
+      // Render
+      renderInventory();
+      renderSalesDay();
+      renderSummary();
+
+      // Tabs
+      document.querySelectorAll(".tab").forEach(b => {
+        b.onclick = () => setActiveTab(b.dataset.tab);
+      });
+
+      // Start in inventory
+      setActiveTab("inventario");
+
+      updateSalePreview();
+    }
+
+    // ====== LOGIN Handlers ======
+    $("btnLoginFill").onclick = () => {
+      $("loginUser").value = AUTH_USER;
+      toast("Usuario autollenado ✅");
+      $("loginPass").focus();
+    };
+
+    $("btnLogin").onclick = async () => {
+      try{
+        $("btnLogin").disabled = true;
+        $("btnLogin").textContent = "Verificando…";
+        await login(($("loginUser").value||"").trim(), $("loginPass").value||"");
+        showApp();
+        await initAfterLogin();
+        toast("Acceso correcto ✅");
+      }catch(err){
+        toast(err.message || "Error de acceso.");
+      }finally{
+        $("btnLogin").disabled = false;
+        $("btnLogin").textContent = "Entrar";
+      }
+    };
+
+    // Enter key
+    ["loginUser","loginPass"].forEach(id => {
+      $(id).addEventListener("keydown", (e) => {
+        if(e.key === "Enter") $("btnLogin").click();
+      });
+    });
+
+    // Autopopulate user for convenience
+    $("loginUser").value = AUTH_USER;
+
+    // En este sistema NO guardamos sesión “permanente” por seguridad.
+    // Si quieres, puedes dejar sessionStorage; pero se perderá al cerrar pestaña.
+    // Si detecta sesión activa, aún requiere key en memoria => no sirve sin password, así que vamos por login siempre.
+  </script>
+</body>
+</html>
