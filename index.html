@@ -836,6 +836,11 @@ const GH_REPO   = "itemshninventario";
 const GH_BRANCH = "main";
 const GH_PATH   = "data/secure_blob.json"; // se guarda aquí dentro del repo
 
+function encodeGhPath(p){
+  return String(p || "").split("/").map(encodeURIComponent).join("/");
+}
+
+
 function getGithubToken(){
   // Token SOLO en sesión (no queda guardado permanente)
   return sessionStorage.getItem("ii_gh_token") || "";
@@ -859,7 +864,7 @@ function ghHeaders(token){
 
 async function ghGetFile(){
   const token = await ensureGithubToken();
-  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(GH_PATH)}?ref=${encodeURIComponent(GH_BRANCH)}`;
+  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeGhPath(GH_PATH)}?ref=${encodeURIComponent(GH_BRANCH)}`;
   const r = await fetch(url, { headers: ghHeaders(token) });
 
   if(r.status === 404) return null; // aún no existe
@@ -872,7 +877,7 @@ async function ghGetFile(){
 
 async function ghPutFile(text, sha=null){
   const token = await ensureGithubToken();
-  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(GH_PATH)}`;
+  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeGhPath(GH_PATH)}`;
 
   const body = {
     message: `sync secure blob ${new Date().toISOString()}`,
