@@ -44,14 +44,22 @@
 
     .wrap{ max-width:1180px; margin: 0 auto; padding: 22px; }
     .topbar{
-      position: sticky;
+      position: fixed;
       top:0;
+      left:0;
+      right:0;
       z-index:10;
       backdrop-filter: blur(14px);
       background: linear-gradient(180deg, rgba(7,10,18,.92), rgba(7,10,18,.60));
       border-bottom: 1px solid rgba(255,255,255,.08);
     }
     .topbar .wrap{ padding-top: 18px; padding-bottom: 14px; }
+
+    /* Se vuelve más compacta cuando haces scroll (para que no moleste) */
+    .topbar.compact .wrap{ padding-top: 12px; padding-bottom: 10px; }
+    .topbar.compact .brand p{ display:none; }
+    .topbar.compact .logo{ width:38px; height:38px; border-radius: 13px; }
+    .topbar.compact .tab{ padding: 9px 12px; }
 
     .brand{
       display:flex; align-items:center; gap:12px;
@@ -103,6 +111,9 @@
     }
 
     .actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+
+    /* Botón de menú (solo móvil) */
+    .menuBtn{ display:none; }
     .pill{
       display:inline-flex; align-items:center; gap:8px;
       padding: 8px 12px;
@@ -201,9 +212,13 @@
     .tablewrap{
       border: 1px solid rgba(255,255,255,.12);
       border-radius: 14px;
-      overflow:hidden;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
       background: rgba(0,0,0,.12);
     }
+    /* En móvil, tablas anchas se deslizan horizontalmente */
+    .tablewrap table{ min-width: 820px; }
+    .tablewrap table.small{ min-width: 420px; }
     table{
       width:100%;
       border-collapse: collapse;
@@ -361,6 +376,20 @@
       background: rgba(0,0,0,.20);
     }
 
+    /* ====== Responsive: barra superior más usable en móvil ====== */
+    @media (max-width: 760px){
+      .wrap{ padding: 16px; }
+      .row{ gap: 10px; }
+      .brand{ width:100%; }
+      .nav{ width:100%; flex-wrap:nowrap; overflow:auto; -webkit-overflow-scrolling: touch; }
+      .nav::-webkit-scrollbar{ height:0; }
+      .tab{ white-space:nowrap; }
+
+      .menuBtn{ display:inline-flex; align-items:center; gap:8px; }
+      .actions{ width:100%; justify-content:flex-start; display:none; }
+      .actions.open{ display:flex; }
+    }
+
     .footer{
       padding: 22px 0 40px 0;
       color: var(--muted2);
@@ -469,7 +498,7 @@
        APP
        ========================= -->
   <div id="appView" style="display:none;" aria-hidden="true">
-    <div class="topbar">
+    <div class="topbar" id="topbar">
       <div class="wrap">
         <div class="row">
           <div class="brand">
@@ -486,7 +515,9 @@
             <button class="tab" data-tab="resumen" role="tab" aria-selected="false">Resumen</button>
           </div>
 
-          <div class="actions">
+          <button class="btn menuBtn" id="btnMenu" aria-expanded="false" aria-controls="topActions">☰ Menú</button>
+
+          <div class="actions" id="topActions">
             <span class="pill"><span class="mono" id="pillUser">—</span> • <span id="pillStatus">Cifrado ✅</span></span>
             <button class="btn" id="btnExport">Exportar respaldo</button>
             <label class="btn" style="display:inline-flex; align-items:center; gap:8px;">
@@ -500,6 +531,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Espaciador para que el contenido no quede debajo de la barra fija -->
+    <div id="topbarSpacer" aria-hidden="true"></div>
 
     <div class="wrap">
       <!-- ========= INVENTARIO ========= -->
@@ -515,7 +549,7 @@
             </div>
             <div class="bd">
               <div class="tablewrap">
-                <table>
+                <table class="small">
                   <thead>
                     <tr>
                       <th class="nowrap">Foto</th>
@@ -1747,6 +1781,34 @@ async function syncPush(){
     // ====== Logout ======
     $("btnLogout").onclick = lockNow;
 
+    // ====== Barra superior fija: espaciador + modo compacto + menú en móvil ======
+    function syncTopbarSpacer(){
+      const tb = $("topbar");
+      const sp = $("topbarSpacer");
+      if(!tb || !sp) return;
+      sp.style.height = tb.getBoundingClientRect().height + "px";
+    }
+
+    function updateTopbarCompact(){
+      const tb = $("topbar");
+      if(!tb) return;
+      tb.classList.toggle("compact", window.scrollY > 12);
+      syncTopbarSpacer();
+    }
+
+    // Menú (solo se nota en móvil, en PC no molesta)
+    $("btnMenu").onclick = () => {
+      const a = $("topActions");
+      const b = $("btnMenu");
+      if(!a || !b) return;
+      a.classList.toggle("open");
+      b.setAttribute("aria-expanded", a.classList.contains("open") ? "true" : "false");
+      syncTopbarSpacer();
+    };
+
+    window.addEventListener("resize", syncTopbarSpacer);
+    window.addEventListener("scroll", updateTopbarCompact, { passive:true });
+
 $("btnSyncPull").onclick = async () => {
   try{ await syncPull(); }
   catch(e){ toast(e.message || "Falló Sync ⬇"); }
@@ -1784,6 +1846,10 @@ $("btnSyncPush").onclick = async () => {
       renderInventory();
       renderSalesDay();
       renderSummary();
+
+      // Barra superior fija: calcula espaciador y aplica modo compacto
+      syncTopbarSpacer();
+      updateTopbarCompact();
 
       // Tabs
       document.querySelectorAll(".tab").forEach(b => {
